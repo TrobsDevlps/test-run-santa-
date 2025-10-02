@@ -34,6 +34,7 @@
         .toy-name { font-weight: bold; color: #ff0000; }
         #form-status { color: #ffd700; font-weight: bold; margin-top: 10px; }
         #result { color: #ffd700; font-weight: bold; margin: 10px; }
+        .loading { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -48,14 +49,14 @@
     <!-- North Pole Village Tab -->
     <div id="village" class="tab-content active">
         <h1>Explore the Enchanted North Pole Village</h1>
-        <div id="villageContainer"></div>
+        <div id="villageContainer" class="loading">Loading magical village...</div>
         <div id="countdown"></div>
     </div>
 
     <!-- Santa Tracker Tab -->
     <div id="tracker" class="tab-content">
         <h1>Santa's Magical 3D Journey Tracker</h1>
-        <div id="cesiumContainer"></div>
+        <div id="cesiumContainer" class="loading">Loading globe...</div>
         <button id="sleighViewBtn">Switch to Sleigh View</button>
         <button id="globalViewBtn">Back to Global View</button>
         <div id="countdown2"></div>
@@ -167,4 +168,69 @@
         directionalLight.shadow.mapSize.height = 2048;
         villageScene.add(directionalLight);
 
-        // Snowy Ground with
+        // Snowy Ground with texture (central square)
+        const snowTexture = loader.load('https://opengameart.org/sites/default/files/snow01.png');
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshLambertMaterial({ map: snowTexture });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = Math.PI / 2;
+        ground.receiveShadow = true;
+        villageScene.add(ground);
+
+        // Load wood and brick textures
+        const woodTexture = loader.load('https://cdn.pixabay.com/photo/2015/11/19/21/11/wood-1006705_1280.jpg');
+        const brickTexture = loader.load('https://threejs.org/examples/textures/brick_diffuse.jpg'); // Placeholder brick
+
+        // Central Giant Christmas Tree
+        const treeTrunkGeometry = new THREE.CylinderGeometry(1, 1.5, 8, 32);
+        const treeTrunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const centralTrunk = new THREE.Mesh(treeTrunkGeometry, treeTrunkMaterial);
+        centralTrunk.position.set(0, 4, 0);
+        centralTrunk.castShadow = true;
+        villageScene.add(centralTrunk);
+        // Foliage layers for big tree
+        for (let level = 0; level < 3; level++) {
+            const foliageGeometry = new THREE.ConeGeometry(8 - level * 2, 10 - level * 3, 32);
+            const foliageMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+            const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+            foliage.position.set(0, 10 - level * 3, 0);
+            foliage.castShadow = true;
+            villageScene.add(foliage);
+        }
+        // Star on top
+        const starGeometry = new THREE.SphereGeometry(1, 32, 32);
+        const starMaterial = new THREE.MeshLambertMaterial({ color: 0xffff00, emissive: 0xffff00 });
+        const star = new THREE.Mesh(starGeometry, starMaterial);
+        star.position.set(0, 25, 0);
+        villageScene.add(star);
+        // Tree lights
+        const treeLightColors = [0xff0000, 0xffff00, 0x00ff00, 0x0000ff];
+        for (let i = 0; i < 50; i++) {
+            const light = new THREE.PointLight(treeLightColors[Math.floor(Math.random() * 4)], 0.5, 5);
+            light.position.set((Math.random() - 0.5) * 10, Math.random() * 20 + 5, (Math.random() - 0.5) * 10);
+            villageScene.add(light);
+        }
+
+        // Arched Colonnade Buildings around central square
+        const archGeometry = new THREE.BoxGeometry(20, 10, 5); // Base
+        const archMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 2) {
+            const arch = new THREE.Mesh(archGeometry, archMaterial);
+            arch.position.set(Math.cos(angle) * 15, 5, Math.sin(angle) * 15);
+            arch.rotation.y = angle;
+            arch.castShadow = true;
+            villageScene.add(arch);
+            // Arches (simple cylinders for columns)
+            for (let col = 0; col < 5; col++) {
+                const columnGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 32);
+                const columnMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const column = new THREE.Mesh(columnGeometry, columnMaterial);
+                const colAngle = angle + (col - 2) * 0.2;
+                column.position.set(Math.cos(colAngle) * 15, 5, Math.sin(colAngle) * 15);
+                column.castShadow = true;
+                villageScene.add(column);
+            }
+            // Roof
+            const roofGeometry = new THREE.BoxGeometry(20, 2, 6);
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff }); // Blue roofs
+            const roof = new THREE.Mesh(roofGeometry
