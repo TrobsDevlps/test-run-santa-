@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,47 +9,52 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.133/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <!-- EmailJS for direct form submission -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Favicon (inline SVG to avoid 404) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎅</text></svg>">
     <style>
-        body { font-family: Arial, sans-serif; background: linear-gradient(to bottom, #001f3f, #87CEEB); color: #fff; margin: 0; padding: 0; }
-        #tabs { display: flex; background: #ff0000; justify-content: center; flex-wrap: wrap; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(to bottom, #001f3f, #87CEEB); color: #fff; margin: 0; padding: 0; overflow-x: hidden; }
+        #tabs { display: flex; background: #ff0000; justify-content: center; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(255,0,0,0.5); }
         #tabs button { padding: 15px 20px; background: none; border: none; color: white; font-size: 18px; cursor: pointer; transition: background 0.3s; }
         #tabs button:hover, #tabs button.active { background: #cc0000; }
         .tab-content { display: none; padding: 20px; text-align: center; min-height: 600px; }
         .tab-content.active { display: block; }
         h1, h2 { color: #ff0000; text-shadow: 0 0 10px #fff; }
-        #villageContainer { height: 500px; width: 100%; background: #001f3f; margin: 20px auto; border-radius: 10px; overflow: hidden; }
-        #cesiumContainer { height: 500px; width: 80%; margin: 20px auto; border: 2px solid #ff0000; border-radius: 10px; }
+        #villageContainer, #cesiumContainer { border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        #villageContainer { height: 500px; width: 100%; max-width: 800px; background: #001f3f; margin: 20px auto; }
+        #cesiumContainer { height: 500px; width: 90%; max-width: 800px; margin: 20px auto; border: 2px solid #ff0000; }
         #countdown { font-size: 28px; margin: 20px; color: #ffd700; text-shadow: 0 0 5px #ff0000; animation: glow 2s ease-in-out infinite alternate; }
         @keyframes glow { from { text-shadow: 0 0 5px #ff0000; } to { text-shadow: 0 0 20px #ff0000; } }
-        #quiz { margin: 20px; max-width: 600px; margin: auto; }
-        button:not(#tabs button) { padding: 10px 20px; background: #228b22; color: white; border: none; cursor: pointer; margin: 10px; border-radius: 5px; transition: all 0.3s; }
+        #quiz { margin: 20px auto; max-width: 600px; }
+        button:not(#tabs button) { padding: 10px 20px; background: #228b22; color: white; border: none; cursor: pointer; margin: 10px; border-radius: 5px; transition: all 0.3s; font-size: 16px; }
         button:not(#tabs button):hover { background: #006400; box-shadow: 0 0 10px #ffd700; transform: scale(1.05); }
-        #letterForm { margin: 20px auto; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; width: 80%; max-width: 500px; }
-        #letterForm input, #letterForm textarea { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #fff; }
+        button:not(#tabs button):disabled { background: #666; cursor: not-allowed; transform: none; }
+        #letterForm { margin: 20px auto; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; width: 80%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        #letterForm input, #letterForm textarea { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #fff; box-sizing: border-box; }
         #letterForm button { background: #ff0000; width: 100%; font-size: 16px; }
         .catalogue-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         .toy-item { background: white; border: 2px solid #ff0000; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #333; transition: transform 0.3s; }
         .toy-item:hover { transform: scale(1.05); }
         .toy-item img { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
-        .toy-name { font-weight: bold; color: #ff0000; }
-        #form-status { color: #ffd700; font-weight: bold; margin-top: 10px; }
-        #result { color: #ffd700; font-weight: bold; margin: 10px; }
-        .loading { opacity: 0.5; pointer-events: none; }
+        .toy-name { font-weight: bold; color: #ff0000; margin: 5px 0; }
+        #form-status, #result { color: #ffd700; font-weight: bold; margin: 10px; font-size: 16px; }
+        #form-status.error { color: #ff0000; }
+        .loading { text-align: center; padding: 50px; font-size: 18px; color: #ffd700; }
+        .error { color: #ff0000; padding: 10px; border-radius: 5px; background: rgba(255,0,0,0.1); }
     </style>
 </head>
 <body>
     <div id="tabs">
-        <button class="tab-btn active" onclick="openTab('village')">North Pole Village</button>
-        <button class="tab-btn" onclick="openTab('tracker')">Santa Tracker</button>
-        <button class="tab-btn" onclick="openTab('letter')">Write a Letter to Santa</button>
-        <button class="tab-btn" onclick="openTab('catalogue')">Toy Catalogue</button>
-        <button class="tab-btn" onclick="openTab('quiz')">Christmas Quiz</button>
+        <button class="tab-btn active" data-tab="village">North Pole Village</button>
+        <button class="tab-btn" data-tab="tracker">Santa Tracker</button>
+        <button class="tab-btn" data-tab="letter">Write a Letter to Santa</button>
+        <button class="tab-btn" data-tab="catalogue">Toy Catalogue</button>
+        <button class="tab-btn" data-tab="quiz">Christmas Quiz</button>
     </div>
 
     <!-- North Pole Village Tab -->
     <div id="village" class="tab-content active">
         <h1>Explore the Enchanted North Pole Village</h1>
-        <div id="villageContainer" class="loading">Loading magical village...</div>
+        <div id="villageContainer" class="loading">Loading magical village... (if blank, check console)</div>
         <div id="countdown"></div>
     </div>
 
@@ -60,6 +65,7 @@
         <button id="sleighViewBtn">Switch to Sleigh View</button>
         <button id="globalViewBtn">Back to Global View</button>
         <div id="countdown2"></div>
+        <div id="tracker-error" class="error" style="display: none;"></div>
     </div>
 
     <!-- Letter to Santa Tab -->
@@ -81,42 +87,42 @@
         <p>Pick your favorites—Santa's elves are watching! (Just for fun—no real wishes sent.)</p>
         <div class="catalogue-grid">
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2017/12/20/10/30/christmas-toys-3028079_1280.jpg" alt="Teddy Bear">
+                <img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587208?w=200&h=150&fit=crop" alt="Teddy Bear" loading="lazy">
                 <h3 class="toy-name">Cuddly Teddy Bear</h3>
                 <p>Soft and huggable for bedtime stories!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2016/11/29/09/11/christmas-1869572_1280.jpg" alt="Toy Train">
+                <img src="https://images.unsplash.com/photo-1608043152269-423dbba4e7e4?w=200&h=150&fit=crop" alt="Toy Train" loading="lazy">
                 <h3 class="toy-name">Choo-Choo Train Set</h3>
                 <p>Zoom around the tracks with Santa's reindeer!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2016/11/22/21/07/santa-claus-1850827_1280.jpg" alt="Doll">
+                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=200&h=150&fit=crop" alt="Doll" loading="lazy">
                 <h3 class="toy-name">Pretty Doll</h3>
                 <p>Dress up and play tea party at the North Pole.</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2017/10/31/09/43/christmas-2906369_1280.jpg" alt="Building Blocks">
+                <img src="https://images.unsplash.com/photo-1587654780324-5c5b7b756f7e?w=200&h=150&fit=crop" alt="Building Blocks" loading="lazy">
                 <h3 class="toy-name">Colorful Building Blocks</h3>
                 <p>Build a castle taller than Santa's chimney!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2016/11/19/15/32/christmas-1837881_1280.jpg" alt="Puzzle">
+                <img src="https://images.unsplash.com/photo-1608042286125-0f3a0e4e5b0e?w=200&h=150&fit=crop" alt="Puzzle" loading="lazy">
                 <h3 class="toy-name">Santa Puzzle</h3>
                 <p>Piece together the magic of Christmas!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2017/12/13/00/35/christmas-3016828_1280.jpg" alt="Rocking Horse">
+                <img src="https://images.unsplash.com/photo-1608042286125-0f3a0e4e5b0e?w=200&h=150&fit=crop" alt="Rocking Horse" loading="lazy">
                 <h3 class="toy-name">Rocking Horse</h3>
                 <p>Gallop like Dasher and Dancer!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2016/12/11/12/07/christmas-1898209_1280.jpg" alt="Board Game">
+                <img src="https://images.unsplash.com/photo-1608043152269-423dbba4e7e4?w=200&h=150&fit=crop" alt="Board Game" loading="lazy">
                 <h3 class="toy-name">Elf Adventure Game</h3>
                 <p>Play with friends and win elf hats!</p>
             </div>
             <div class="toy-item">
-                <img src="https://cdn.pixabay.com/photo/2015/12/01/20/28/black-and-white-1072369_1280.jpg" alt="Snow Globe">
+                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=200&h=150&fit=crop" alt="Snow Globe" loading="lazy">
                 <h3 class="toy-name">Magical Snow Globe</h3>
                 <p>Shake for a flurry of North Pole snow!</p>
             </div>
@@ -128,13 +134,13 @@
         <h1>Fun Magical Activity: Christmas Quiz</h1>
         <div id="quiz-content">
             <p id="question"></p>
-            <button onclick="checkAnswer(true)">True</button>
-            <button onclick="checkAnswer(false)">False</button>
+            <button id="trueBtn" onclick="checkAnswer(true)">True</button>
+            <button id="falseBtn" onclick="checkAnswer(false)">False</button>
             <p id="result"></p>
         </div>
     </div>
 
-    <!-- Three.js for Enhanced Magical Village Inspired by Image -->
+    <!-- Three.js Village Script -->
     <script type="importmap">
         {
             "imports": {
@@ -147,80 +153,78 @@
         import { TextureLoader } from 'https://unpkg.com/three@0.152.2/examples/jsm/loaders/TextureLoader.js?module';
 
         const loader = new TextureLoader();
+        const container = document.getElementById('villageContainer');
+        container.classList.remove('loading');
 
-        // Village Scene setup with crisp rendering
-        const villageScene = new THREE.Scene();
-        villageScene.fog = new THREE.Fog(0x001122, 20, 150); // Dark blue fog for night sky
-        const villageCamera = new THREE.PerspectiveCamera(75, window.innerWidth / 500, 0.1, 1000);
-        const villageRenderer = new THREE.WebGLRenderer({ antialias: true });
-        villageRenderer.setSize(window.innerWidth, 500);
-        villageRenderer.shadowMap.enabled = true;
-        villageRenderer.shadowMap.type = THREE.PCFSoftShadowMap; // Crisp shadows
-        document.getElementById('villageContainer').appendChild(villageRenderer.domElement);
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x001122, 20, 150);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 500, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, 500);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
 
-        // Enhanced Lighting for night magic
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-        villageScene.add(ambientLight);
+        scene.add(ambientLight);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
         directionalLight.position.set(10, 20, 5);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
-        villageScene.add(directionalLight);
+        scene.add(directionalLight);
 
-        // Snowy Ground with texture (central square)
-        const snowTexture = loader.load('https://opengameart.org/sites/default/files/snow01.png');
+        // Ground
+        const snowTexture = loader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg'); // Fallback texture
         const groundGeometry = new THREE.PlaneGeometry(100, 100);
         const groundMaterial = new THREE.MeshLambertMaterial({ map: snowTexture });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = Math.PI / 2;
         ground.receiveShadow = true;
-        villageScene.add(ground);
+        scene.add(ground);
 
-        // Load wood and brick textures
-        const woodTexture = loader.load('https://cdn.pixabay.com/photo/2015/11/19/21/11/wood-1006705_1280.jpg');
-        const brickTexture = loader.load('https://threejs.org/examples/textures/brick_diffuse.jpg'); // Placeholder brick
+        // Wood/brick textures (with fallbacks)
+        const woodTexture = loader.load('https://threejs.org/examples/textures/hardwood2_diffuse.jpg', undefined, undefined, (err) => console.log('Wood texture failed:', err));
+        const brickTexture = loader.load('https://threejs.org/examples/textures/brick_diffuse.jpg', undefined, undefined, (err) => console.log('Brick texture failed:', err));
 
-        // Central Giant Christmas Tree
-        const treeTrunkGeometry = new THREE.CylinderGeometry(1, 1.5, 8, 32);
-        const treeTrunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-        const centralTrunk = new THREE.Mesh(treeTrunkGeometry, treeTrunkMaterial);
-        centralTrunk.position.set(0, 4, 0);
-        centralTrunk.castShadow = true;
-        villageScene.add(centralTrunk);
-        // Foliage layers for big tree
+        // Central Tree
+        const trunkGeometry = new THREE.CylinderGeometry(1, 1.5, 8, 32);
+        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.set(0, 4, 0);
+        trunk.castShadow = true;
+        scene.add(trunk);
         for (let level = 0; level < 3; level++) {
             const foliageGeometry = new THREE.ConeGeometry(8 - level * 2, 10 - level * 3, 32);
             const foliageMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
             const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
             foliage.position.set(0, 10 - level * 3, 0);
             foliage.castShadow = true;
-            villageScene.add(foliage);
+            scene.add(foliage);
         }
-        // Star on top
         const starGeometry = new THREE.SphereGeometry(1, 32, 32);
         const starMaterial = new THREE.MeshLambertMaterial({ color: 0xffff00, emissive: 0xffff00 });
         const star = new THREE.Mesh(starGeometry, starMaterial);
         star.position.set(0, 25, 0);
-        villageScene.add(star);
-        // Tree lights
+        scene.add(star);
         const treeLightColors = [0xff0000, 0xffff00, 0x00ff00, 0x0000ff];
         for (let i = 0; i < 50; i++) {
             const light = new THREE.PointLight(treeLightColors[Math.floor(Math.random() * 4)], 0.5, 5);
             light.position.set((Math.random() - 0.5) * 10, Math.random() * 20 + 5, (Math.random() - 0.5) * 10);
-            villageScene.add(light);
+            scene.add(light);
         }
 
-        // Arched Colonnade Buildings around central square
-        const archGeometry = new THREE.BoxGeometry(20, 10, 5); // Base
+        // Arched Colonnade
+        const archGeometry = new THREE.BoxGeometry(20, 10, 5);
         const archMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
         for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 2) {
             const arch = new THREE.Mesh(archGeometry, archMaterial);
             arch.position.set(Math.cos(angle) * 15, 5, Math.sin(angle) * 15);
             arch.rotation.y = angle;
             arch.castShadow = true;
-            villageScene.add(arch);
-            // Arches (simple cylinders for columns)
+            scene.add(arch);
             for (let col = 0; col < 5; col++) {
                 const columnGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 32);
                 const columnMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
@@ -228,9 +232,390 @@
                 const colAngle = angle + (col - 2) * 0.2;
                 column.position.set(Math.cos(colAngle) * 15, 5, Math.sin(colAngle) * 15);
                 column.castShadow = true;
-                villageScene.add(column);
+                scene.add(column);
             }
-            // Roof
             const roofGeometry = new THREE.BoxGeometry(20, 2, 6);
-            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff }); // Blue roofs
-            const roof = new THREE.Mesh(roofGeometry
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.set(Math.cos(angle) * 15, 12, Math.sin(angle) * 15);
+            roof.rotation.y = angle;
+            roof.castShadow = true;
+            scene.add(roof);
+        }
+
+        // Clock Tower
+        const towerGeometry = new THREE.BoxGeometry(4, 20, 4);
+        const towerMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
+        const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+        tower.position.set(-25, 10, 0);
+        tower.castShadow = true;
+        scene.add(tower);
+        const clockGeometry = new THREE.CircleGeometry(2, 32);
+        const clockMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const clock = new THREE.Mesh(clockGeometry, clockMaterial);
+        clock.position.set(-25, 15, 2.1);
+        clock.rotation.x = Math.PI / 2;
+        scene.add(clock);
+        const towerRoofGeometry = new THREE.ConeGeometry(5, 6, 4);
+        const towerRoofMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+        const towerRoof = new THREE.Mesh(towerRoofGeometry, towerRoofMaterial);
+        towerRoof.position.set(-25, 23, 0);
+        towerRoof.castShadow = true;
+        scene.add(towerRoof);
+
+        // Train Tracks & Train
+        const trackGeometry = new THREE.TorusGeometry(18, 0.5, 16, 100);
+        const trackMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const tracks = new THREE.Mesh(trackGeometry, trackMaterial);
+        tracks.rotation.x = Math.PI / 2;
+        tracks.position.y = 0.5;
+        scene.add(tracks);
+        const trainGeometry = new THREE.BoxGeometry(3, 1, 2);
+        const trainMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        const train = new THREE.Mesh(trainGeometry, trainMaterial);
+        train.position.set(18, 1, 0);
+        train.castShadow = true;
+        scene.add(train);
+        let trainAngle = 0;
+
+        // Village Street Buildings
+        for (let i = -30; i <= 30; i += 6) {
+            const buildingGeometry = new THREE.BoxGeometry(4, 8, 6);
+            const buildingMaterial = new THREE.MeshLambertMaterial({ map: woodTexture });
+            const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+            building.position.set(i, 4, -25);
+            building.castShadow = true;
+            scene.add(building);
+            const bRoofGeometry = new THREE.ConeGeometry(5, 3, 4);
+            const bRoofMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+            const bRoof = new THREE.Mesh(bRoofGeometry, bRoofMaterial);
+            bRoof.position.set(i, 9, -25);
+            bRoof.castShadow = true;
+            scene.add(bRoof);
+            for (let w = 0; w < 3; w++) {
+                const windowGeometry = new THREE.PlaneGeometry(0.8, 0.8);
+                const windowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+                const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                window.position.set(i - 1 + w * 0.8, 4, -22.1);
+                scene.add(window);
+            }
+        }
+
+        // Smokestacks
+        for (let i = 0; i < 3; i++) {
+            const stackGeometry = new THREE.CylinderGeometry(1, 1, 15, 32);
+            const stackMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const stack = new THREE.Mesh(stackGeometry, stackMaterial);
+            stack.position.set(-10 + i * 10, 7.5, 20);
+            stack.castShadow = true;
+            scene.add(stack);
+            const smokeGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const smokeMaterial = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
+            const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+            smoke.position.set(stack.position.x, stack.position.y + 8, stack.position.z);
+            scene.add(smoke);
+        }
+
+        // Aurora
+        const auroraGeometry = new THREE.PlaneGeometry(200, 100);
+        const auroraTexture = loader.load('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImEiIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjUwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzAwMDBmZiIgc3RvcC1vcGFjaXR5OiIwLjMiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMGZmMDAiIHN0b3Atb3BhY2l0eT0iMC4zIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjYSkiLz48L3N2Zz4=');
+        const auroraMaterial = new THREE.MeshBasicMaterial({ map: auroraTexture, transparent: true, opacity: 0.3 });
+        const aurora = new THREE.Mesh(auroraGeometry, auroraMaterial);
+        aurora.position.set(0, 50, -50);
+        aurora.rotation.x = Math.PI / 2;
+        scene.add(aurora);
+
+        // Elves
+        const elves = [];
+        const centralPaths = [
+            [{x: -10, z: -10}, {x: 10, z: -10}],
+            [{x: -10, z: 10}, {x: 10, z: 10}],
+            [{x: 0, z: -10}, {x: 0, z: 10}]
+        ];
+        for (let pathIdx = 0; pathIdx < 3; pathIdx++) {
+            for (let i = 0; i < 4; i++) {
+                const elfGroup = new THREE.Group();
+                const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1, 32);
+                const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.5;
+                body.castShadow = true;
+                elfGroup.add(body);
+                const headGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+                const headMaterial = new THREE.MeshLambertMaterial({ color: 0xffdbac });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                head.position.y = 1.3;
+                head.castShadow = true;
+                elfGroup.add(head);
+                const hatGeometry = new THREE.ConeGeometry(0.4, 0.6, 32);
+                const hatMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+                const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+                hat.position.y = 2;
+                elfGroup.add(hat);
+                const startPos = centralPaths[pathIdx][0];
+                elfGroup.position.set(startPos.x + (i - 1.5) * 2, 0, startPos.z);
+                scene.add(elfGroup);
+                elves.push({ group: elfGroup, path: centralPaths[pathIdx], direction: 1, progress: Math.random() });
+            }
+        }
+
+        // Lights
+        const colors = [0xff0000, 0xffff00, 0x00ff00, 0x0000ff];
+        const lights = [];
+        for (let i = 0; i < 50; i++) {
+            const light = new THREE.PointLight(colors[Math.floor(Math.random() * colors.length)], 0.8, 15);
+            light.position.set(Math.random() * 60 - 30, Math.random() * 15 + 2, Math.random() * 60 - 30);
+            scene.add(light);
+            lights.push(light);
+        }
+
+        // Snow
+        const snowGeometry = new THREE.BufferGeometry();
+        const snowVertices = [];
+        for (let i = 0; i < 3000; i++) {
+            snowVertices.push(Math.random() * 100 - 50, Math.random() * 50 + 10, Math.random() * 100 - 50);
+        }
+        snowGeometry.setAttribute('position', new THREE.Float32BufferAttribute(snowVertices, 3));
+        const snowMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
+        const snow = new THREE.Points(snowGeometry, snowMaterial);
+        scene.add(snow);
+
+        // Camera
+        camera.position.set(0, 40, 50);
+        camera.lookAt(0, 0, 0);
+
+        // Animation Loop
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+            // Train
+            trainAngle += 0.005;
+            train.position.x = Math.cos(trainAngle) * 18;
+            train.position.z = Math.sin(trainAngle) * 18;
+            train.rotation.y = trainAngle;
+            // Elves
+            elves.forEach(elf => {
+                elf.progress += 0.003 * elf.direction;
+                if (elf.progress >= 1 || elf.progress <= 0) {
+                    elf.direction *= -1;
+                    elf.progress = Math.max(0, Math.min(1, elf.progress));
+                }
+                const pos = {
+                    x: elf.path[0].x + (elf.path[1].x - elf.path[0].x) * elf.progress,
+                    z: elf.path[0].z + (elf.path[1].z - elf.path[0].z) * elf.progress
+                };
+                elf.group.position.set(pos.x, 0, pos.z);
+                elf.group.position.y = Math.sin(time * 10 + elf.progress * Math.PI * 2) * 0.1;
+                elf.group.rotation.y = Math.sin(time * 5) * 0.1;
+            });
+            // Lights
+            lights.forEach((light, idx) => {
+                light.intensity = Math.sin(time * 2 + idx) * 0.5 + 0.5;
+            });
+            // Snow
+            snow.position.y -= 0.05;
+            if (snow.position.y < -20) snow.position.y = 30;
+            // Aurora
+            aurora.position.y = 50 + Math.sin(time * 0.5) * 2;
+            // Rotation
+            scene.rotation.y += 0.0002;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / 500;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, 500);
+        });
+
+        console.log('Village loaded successfully!');
+    </script>
+
+    <!-- Main Script (Tabs, Cesium, EmailJS, Quiz, Countdown) -->
+    <script>
+        // Tab Functionality (moved to top to avoid 'not defined')
+        function openTab(tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            document.getElementById(tabName).classList.add('active');
+
+            const tabBtns = document.getElementsByClassName('tab-btn');
+            for (let i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove('active');
+            }
+            event.currentTarget.classList.add('active');
+        }
+
+        // Event Listeners for Tabs (data-tab attribute)
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabName = e.currentTarget.getAttribute('data-tab');
+                    openTab(tabName);
+                });
+            });
+        });
+
+        // Cesium Setup
+        let viewer, santaEntity, index = 0, isSleighView = false;
+        const route = [
+            [151.0, -34.0],  // Sydney
+            [139.6917, 35.6895],  // Tokyo
+            [116.4074, 39.9042],  // Beijing
+            [37.6173, 55.7558],  // Moscow
+            [-0.1278, 51.5074],  // London
+            [-74.0060, 40.7128],  // New York
+            [-118.2437, 34.0522]  // Los Angeles
+        ];
+
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlNTcyMzQwYy1iZjk3LTQxOTYtYTY2YS04MWZmZjg1NTk1MDUiLCJpZCI6MzQ2Njg1LCJpYXQiOjE3NTk0Mjg4Mzd9.SQajYG8C5RvqBJ2vPKd87_IGTo-NC38PyIDsMlOc8f8';
+
+        try {
+            viewer = new Cesium.Viewer('cesiumContainer', {
+                terrain: Cesium.Terrain.fromWorldTerrain(),
+                animation: false,
+                baseLayerPicker: false,
+                geocoder: false,
+                homeButton: false,
+                sceneModePicker: false,
+                selectionIndicator: false,
+                timeline: false,
+                navigationHelpButton: false,
+                fullscreenButton: false,
+                vrButton: false
+            });
+            document.getElementById('cesiumContainer').classList.remove('loading');
+
+            santaEntity = viewer.entities.add({
+                name: 'Santa\'s Sleigh',
+                position: Cesium.Cartesian3.fromDegrees(0, 90),
+                billboard: {
+                    image: 'https://img.icons8.com/color/96/000000/santa-claus.png',
+                    scale: 0.5
+                },
+                orientation: new Cesium.VelocityOrientationProperty()
+            });
+
+            function updateSantaPosition() {
+                const now = new Date();
+                if (true) {  // Preview mode
+                    const [lon, lat] = route[index % route.length];
+                    santaEntity.position = Cesium.Cartesian3.fromDegrees(lon, lat);
+                    if (isSleighView) {
+                        viewer.trackedEntity = santaEntity;
+                        viewer.camera.lookAt(santaEntity.position, new Cesium.Cartesian3(0, -50, 10));
+                    } else {
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(lon, lat, 1000000),
+                            orientation: { heading: Cesium.Math.toRadians(0.0), pitch: Cesium.Math.toRadians(-45.0) }
+                        });
+                    }
+                    index++;
+                } else {
+                    santaEntity.position = Cesium.Cartesian3.fromDegrees(0, 90);
+                    if (isSleighView) {
+                        viewer.trackedEntity = santaEntity;
+                        viewer.camera.lookAt(santaEntity.position, new Cesium.Cartesian3(0, -50, 10));
+                    } else {
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(0, 90, 1000000),
+                            orientation: { heading: Cesium.Math.toRadians(0.0), pitch: Cesium.Math.toRadians(-45.0) }
+                        });
+                    }
+                }
+            }
+            updateSantaPosition();
+            setInterval(updateSantaPosition, 60000);
+
+            // View Buttons
+            document.getElementById('sleighViewBtn').addEventListener('click', () => {
+                isSleighView = true;
+                updateSantaPosition();
+            });
+            document.getElementById('globalViewBtn').addEventListener('click', () => {
+                isSleighView = false;
+                viewer.trackedEntity = undefined;
+                updateSantaPosition();
+            });
+
+            console.log('Cesium loaded successfully!');
+        } catch (error) {
+            document.getElementById('cesiumContainer').innerHTML = '<div class="error">Globe failed to load—check token or connection.</div>';
+            console.error('Cesium error:', error);
+        }
+
+        // Countdown
+        function countdown() {
+            const christmas = new Date('December 25, 2025 00:00:00');
+            const now = new Date();
+            const diff = christmas - now;
+            const output = diff > 0 
+                ? `Time Until Christmas Magic: ${Math.floor(diff / (1000 * 60 * 60 * 24))} days, ${Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))} hours, ${Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))} minutes, ${Math.floor((diff % (1000 * 60)) / 1000)} seconds! 🎄`
+                : 'Merry Christmas! The Magic is Here! ✨';
+            document.getElementById('countdown').innerHTML = output;
+            document.getElementById('countdown2').innerHTML = output;
+        }
+        setInterval(countdown, 1000);
+        countdown();
+
+        // EmailJS
+        emailjs.init('TZYi3pJhg4UH2i8Pl');
+
+        document.getElementById('letterForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const params = {
+                from_name: document.getElementById('user_name').value,
+                from_email: document.getElementById('user_email').value || 'No email provided',
+                message: document.getElementById('message').value,
+                to_email: 'robson.tye+santa@gmail.com'
+            };
+            emailjs.send('service_1ambdft', 'template_nx68i1k', params)
+                .then(() => {
+                    document.getElementById('form-status').innerHTML = 'Your letter has been sent to Santa! He\'ll reply soon. ✨';
+                    document.getElementById('form-status').className = '';
+                    document.getElementById('letterForm').reset();
+                }, (error) => {
+                    document.getElementById('form-status').innerHTML = 'Oops! Something went wrong. Try again. 😊';
+                    document.getElementById('form-status').className = 'error';
+                    console.error('EmailJS error:', error);
+                });
+        });
+
+        // Quiz
+        const questions = [
+            { q: "Santa's workshop is full of magical elves making toys. True or False?", a: true },
+            { q: "Reindeer fly using pixie dust. True or False?", a: false },
+            { q: "The North Pole has twinkling lights all year. True or False?", a: true }
+        ];
+        let currentQ = 0;
+
+        function loadQuestion() {
+            document.getElementById('question').innerHTML = questions[currentQ].q;
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('trueBtn').disabled = false;
+            document.getElementById('falseBtn').disabled = false;
+        }
+        loadQuestion();
+
+        function checkAnswer(userAnswer) {
+            document.getElementById('trueBtn').disabled = true;
+            document.getElementById('falseBtn').disabled = true;
+            if (userAnswer === questions[currentQ].a) {
+                document.getElementById('result').innerHTML = 'Correct! Magical! 🎉✨';
+            } else {
+                document.getElementById('result').innerHTML = 'Oops! Try again for the magic. 😊❄️';
+            }
+            currentQ = (currentQ + 1) % questions.length;
+            setTimeout(loadQuestion, 2000);
+        }
+
+        console.log('Site loaded successfully!');
+    </script>
+</body>
+</html>
